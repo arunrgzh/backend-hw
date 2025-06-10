@@ -1,0 +1,62 @@
+[
+  {
+    "id": "de_dust2",
+    "name": "Dust II",
+    "fileName": "de_dust2",
+    "firstAppeared": "March 13, 2001"
+  },
+  {
+    "id": "de_mirage",
+    "name": "Mirage",
+    "fileName": "de_mirage",
+    "firstAppeared": "2013 (CS:GO release)"
+  },
+  {
+    "id": "de_inferno",
+    "name": "Inferno",
+    "fileName": "de_inferno",
+    "firstAppeared": "2001"
+  },
+  {
+    "id": "de_nuke",
+    "name": "Nuke",
+    "fileName": "de_nuke",
+    "firstAppeared": "November 1999"
+  },
+  {
+    "id": "de_overpass",
+    "name": "Overpass",
+    "fileName": "de_overpass",
+    "firstAppeared": "2013"
+  },
+  {
+    "id": "de_train",
+    "name": "Train",
+    "fileName": "de_train",
+    "firstAppeared": "2000"
+  },
+  {
+    "id": "de_cache",
+    "name": "Cache",
+    "fileName": "de_cache",
+    "firstAppeared": "2013"
+  },
+  {
+    "id": "de_vertigo",
+    "name": "Vertigo",
+    "fileName": "de_vertigo",
+    "firstAppeared": "2013"
+  },
+  {
+    "id": "de_ancient",
+    "name": "Ancient",
+    "fileName": "de_ancient",
+    "firstAppeared": "2021"
+  },
+  {
+    "id": "de_anubis",
+    "name": "Anubis",
+    "fileName": "de_anubis",
+    "firstAppeared": "March 2020"
+  }
+]

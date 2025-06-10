@@ -1,0 +1,62 @@
+[
+  {
+    "id": "ctm_sas",
+    "name": "SAS",
+    "team": "Counter-Terrorist",
+    "modelKV": "ctm_sas"
+  },
+  {
+    "id": "ctm_st6",
+    "name": "SEAL Team 6",
+    "team": "Counter-Terrorist",
+    "modelKV": "ctm_st6"
+  },
+  {
+    "id": "ctm_gsg9",
+    "name": "GSG-9",
+    "team": "Counter-Terrorist",
+    "modelKV": "ctm_gsg9"
+  },
+  {
+    "id": "ctm_gign",
+    "name": "GIGN",
+    "team": "Counter-Terrorist",
+    "modelKV": "ctm_gign"
+  },
+  {
+    "id": "ctm_swat",
+    "name": "SWAT",
+    "team": "Counter-Terrorist",
+    "modelKV": "ctm_swat"
+  },
+  {
+    "id": "tm_phoenix",
+    "name": "Phoenix Connexion",
+    "team": "Terrorist",
+    "modelKV": "tm_phoenix"
+  },
+  {
+    "id": "tm_leet_variantA",
+    "name": "Elite Crew",
+    "team": "Terrorist",
+    "modelKV": "tm_leet_variantA"
+  },
+  {
+    "id": "tm_anarchist",
+    "name": "Anarchist",
+    "team": "Terrorist",
+    "modelKV": "tm_anarchist"
+  },
+  {
+    "id": "tm_professional",
+    "name": "Professional",
+    "team": "Terrorist",
+    "modelKV": "tm_professional"
+  },
+  {
+    "id": "tm_balkan_variantA",
+    "name": "Balkan",
+    "team": "Terrorist",
+    "modelKV": "tm_balkan_variantA"
+  }
+]
