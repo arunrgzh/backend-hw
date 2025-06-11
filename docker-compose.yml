@@ -36,7 +36,7 @@ services:
       - "6379:6379"
     networks:
       - default
-    
+
   celery:
     build: .
     command: celery -A tasks.celery_worker worker --loglevel=info
@@ -44,7 +44,7 @@ services:
       - ./src:/app/src
     env_file:
       - .env
-  
+
   celery-beat:
     build: .
     command: celery -A tasks.celery_beat worker --loglevel=info
@@ -52,6 +52,6 @@ services:
       - ./src:/app/src
     env_file:
       - .env
-  
+
 volumes:
   postgres_data:

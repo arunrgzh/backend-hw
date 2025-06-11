@@ -1,0 +1,42 @@
+name: CI/CD for FastAPI App
+
+on:
+  push:
+    branches:
+      - main # Trigger on push to the main branch
+  pull_request:
+    branches:
+      - main # Trigger on pull request to the main branch
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: "3.11" # You can change this to the Python version you are using
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run tests
+        run: |
+          # Make sure your tests are set up properly (like using pytest or unittest)
+          pytest  # or another test runner you are using
+
+      - name: Build Docker image
+        run: |
+          docker build -t my-fastapi-app .
+
+      - name: Push Docker image to Docker Hub
+        run: |
+          docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
+          docker tag my-fastapi-app:latest ${{ secrets.DOCKER_USERNAME }}/my-fastapi-app:latest
+          docker push ${{ secrets.DOCKER_USERNAME }}/my-fastapi-app:latest

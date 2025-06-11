@@ -16,13 +16,13 @@ const About: FC = () => {
   const [activeTab, setActiveTab] = useState<Tab>("Characters");
   const [search, setSearch] = useState("");
   const [characters, setCharacters] = useState<Character[]>([]);
-  const [maps, setMaps] = useState<MapItem[]>([]); // подключить позже
+  const [maps, setMaps] = useState<MapItem[]>([]);
+  const [newName, setNewName] = useState("");
+  const [newDescription, setNewDescription] = useState("");
+  const [showAdd, setShowAdd] = useState(false);
   const HIGHLIGHTS = new Set(["CHARACTERS", "MAPS"]);
 
-  const filteredMaps = rawMaps.filter((map) =>
-    map.name.toLowerCase().includes(search.toLowerCase())
-  );
-
+  // Fetch characters from backend
   useEffect(() => {
     const fetchCharacters = async () => {
       try {
@@ -38,13 +38,53 @@ const About: FC = () => {
 
     fetchCharacters();
   }, [search]);
+
+  // Handle adding a new character
+  const addCharacter = async () => {
+    if (!newName.trim() || !newDescription.trim()) {
+      alert("Please provide both a name and description");
+      return;
+    }
+
+    try {
+      const response = await fetch("http://localhost:3001/api/characters", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name: newName,
+          description: newDescription,
+        }),
+      });
+
+      const addedCharacter = await response.json();
+
+      // Optimistically update the characters list
+      setCharacters((prev) => [addedCharacter, ...prev]);
+
+      // Reset form fields and hide the form
+      setNewName("");
+      setNewDescription("");
+      setShowAdd(false);
+    } catch (error) {
+      console.error("Error adding character:", error);
+      alert("Failed to add character.");
+    }
+  };
+
+  // Handle toggling the Add Character form
+  const toggleAddForm = () => {
+    setShowAdd((prev) => !prev);
+  };
+
   return (
     <div className="min-h-screen bg-primary text-white">
       <Navbar />
 
       {/* Hero / Banner */}
       <section
-        className="min-h-screen relative h-64 md:h-96 bg-cover bg-center "
+        className="min-h-screen relative h-64 md:h-96 bg-cover bg-center"
         style={{
           backgroundImage: `url(${Bg})`,
         }}
@@ -77,33 +117,81 @@ const About: FC = () => {
         </div>
       </section>
 
-      {/* Tabs */}
+      {/* Tabs and Add Character Button */}
       <div className="max-w-4xl mx-auto mt-8 px-4">
-        <div className="flex border-b border-gray-700">
-          {tabs.map((tab) => (
+        <div className="flex justify-between items-center border-b border-gray-700 pb-2">
+          <div className="flex space-x-4">
+            {tabs.map((tab) => (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                className={
+                  activeTab === tab
+                    ? "border-b-2 border-primary-orange text-white"
+                    : "text-gray-500 hover:text-gray-300"
+                }
+              >
+                {tab}
+              </button>
+            ))}
+          </div>
+
+          {/* Only show "Add Character" button when the "Characters" tab is active */}
+          {activeTab === "Characters" && (
             <button
-              key={tab}
-              onClick={() => setActiveTab(tab)}
-              className={`py-2 px-6 -mb-px font-medium ${
-                activeTab === tab
-                  ? "font-poppins text-xl border-b-2 border-primary-orange text-white"
-                  : "font-poppins text-xl text-gray-500 hover:text-gray-300"
-              }`}
+              onClick={toggleAddForm}
+              className="bg-primary-orange px-4 py-2 rounded-lg text-black font-bold"
             >
-              {tab}
+              + Add Character
             </button>
-          ))}
+          )}
         </div>
 
-        <div className="mt-6 font-poppins mb-12 grid grid-cols-1 sm:grid-cols-2 gap-6">
+        {/* Add Character Form */}
+        {showAdd && (
+          <div className="mt-6 bg-gray-800 p-4 rounded-lg space-y-4">
+            <h3 className="text-lg font-semibold">New Character</h3>
+            <input
+              type="text"
+              placeholder="Name"
+              value={newName}
+              onChange={(e) => setNewName(e.target.value)}
+              className="w-full px-3 py-2 rounded bg-primary backdrop-blur"
+            />
+            <textarea
+              placeholder="Description"
+              value={newDescription}
+              onChange={(e) => setNewDescription(e.target.value)}
+              className="w-full px-3 py-2 rounded bg-primary backdrop-blur"
+            />
+            <div className="flex space-x-2">
+              <button
+                onClick={addCharacter}
+                className="bg-green-500 px-4 py-2 rounded"
+              >
+                Save
+              </button>
+              <button
+                onClick={() => setShowAdd(false)}
+                className="bg-red-500 px-4 py-2 rounded"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Characters grid */}
+        <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-6">
           {activeTab === "Characters"
             ? characters.map((character) => (
                 <CharacterCard key={character.id} character={character} />
               ))
-            : filteredMaps.map((map) => <MapCard key={map.id} map={map} />)}
+            : rawMaps.map((map) => <MapCard key={map.id} map={map} />)}
         </div>
       </div>
 
+      {/* Footer */}
       <footer className="bg-black text-white py-10 px-4">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center text-center md:text-left space-y-4 md:space-y-0">
           <div className="flex  items-center gap-2">
