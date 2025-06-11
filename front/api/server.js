@@ -11,7 +11,7 @@ app.use(express.json()); // To parse JSON request bodies
 const client = new Client({
   connectionString:
     process.env.DATABASE_URL ||
-    "postgresql://postgres:mypassword@localhost:5432/characters_db",
+    "postgresql://postgres:Aarukow4171@localhost:5432/characters_db",
 });
 
 client.connect();
