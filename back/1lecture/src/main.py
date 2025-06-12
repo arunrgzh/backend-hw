@@ -12,11 +12,11 @@ def get_db():
     finally:
         db.close()
 
-@app.post("/add_characters/", response_model=schemas.Task)
-def create_task(task: schemas.TaskCreate, db: Session = Depends(get_db)):
-    return crud.create_task(db=db, task=task)
+@app.post("/add_characters/", response_model=schemas.Character)
+def add_characters(character: schemas.CharacterCreate, db: Session = Depends(get_db)):
+    return crud.create_character(db=db, character=character)
 
-@app.get("/get_characters/", response_model=list[schemas.Task])
-def get_tasks(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
-    tasks = crud.get_tasks(db, skip=skip, limit=limit)
-    return tasks
+@app.get("/get_characters/", response_model=list[schemas.Character])
+def get_characters(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
+    characters = crud.get_characters(db, skip=skip, limit=limit)
+    return characters
