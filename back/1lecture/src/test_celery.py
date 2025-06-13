@@ -1,6 +1,6 @@
 import time
-from celery_app import celery_app
-from tasks import process_character
+from .celery_app import celery_worker
+from .tasks import process_character
 
 def test_celery_redis():
     # Test data

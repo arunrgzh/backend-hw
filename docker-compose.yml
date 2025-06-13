@@ -14,7 +14,7 @@ services:
 
   web:
     build: .
-    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+    command: uvicorn src.main:app --host 0.0.0.0 --port 8000 --reload
     volumes:
       - ./src:/app/src
       - ./alembic.ini:/app/alembic.ini
@@ -26,7 +26,7 @@ services:
       - db
     env_file:
       - .env
-    working_dir: /app/src
+    working_dir: /app
 
   redis:
     image: redis:latest
@@ -37,15 +37,16 @@ services:
 
   celery:
     build: .
-    command: celery -A tasks.celery_worker worker --loglevel=info
+    command: celery -A src.tasks.celery_worker worker --loglevel=info
     volumes:
       - ./src:/app/src
     env_file:
       - .env
+    working_dir: /app
 
   celery-beat:
     build: .
-    command: celery -A tasks.celery_beat worker --loglevel=info
+    command: celery -A src.tasks.celery_beat worker --loglevel=info
     volumes:
       - ./src:/app/src
     env_file:
@@ -55,10 +56,11 @@ services:
       - db
     networks:
       - default
+    working_dir: /app
 
   flower:
     build: .
-    command: celery -A tasks.celery_worker flower --port=5555
+    command: celery -A src.tasks.celery_worker flower --port=5555
     ports:
       - "5555:5555"
     depends_on:
@@ -66,6 +68,7 @@ services:
       - celery
     networks:
       - default
+    working_dir: /app
 
 volumes:
   postgres_data:

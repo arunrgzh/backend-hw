@@ -1,7 +1,7 @@
-from .celery_app import celery_app
+from .celery_app import celery_worker
 import time
 
-@celery_app.task(name="process_character")
+@celery_worker.task(name="process_character")
 def process_character(character_data: dict):
     # Simulate some processing time
     time.sleep(5)
