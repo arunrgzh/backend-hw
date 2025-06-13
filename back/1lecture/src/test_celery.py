@@ -1,5 +1,4 @@
 import time
-from back.1lecture.src.celery_app import celery_worker
 from back.1lecture.src.tasks import process_character
 
 def test_celery_redis():
