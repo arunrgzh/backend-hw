@@ -1,4 +1,4 @@
-from .celery_app import celery_worker
+from back.1lecture.src.celery_app import celery_worker
 import time
 
 @celery_worker.task(name="process_character")

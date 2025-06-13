@@ -1,0 +1,3 @@
+"""
+Lecture package initialization
+""" 
