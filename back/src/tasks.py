@@ -1,4 +1,4 @@
-from back.1lecture.src.celery_app import app
+from back.src.celery_app import app
 import time
 
 @app.task(name="process_character")

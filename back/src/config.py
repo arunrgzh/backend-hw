@@ -5,6 +5,7 @@ class Settings(BaseSettings):
     redis_url: str
     celery_broker_url: str
     celery_result_backend: str
+    gemini_api_key: str
 
     class Config:
         env_file = ".env"  

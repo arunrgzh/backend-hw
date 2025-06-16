@@ -12,3 +12,6 @@ class Character(CharacterBase):
 
     class Config:
         orm_mode = True
+
+class ChatMessage(BaseModel):
+    content: str
