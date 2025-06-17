@@ -1,6 +1,6 @@
-from back.src.celery_app import app
-from back.src.database import SessionLocal
-from back.src import models, schemas
+from .celery_app import app
+from .database import SessionLocal
+from . import models, schemas
 import requests
 from datetime import datetime
 import logging

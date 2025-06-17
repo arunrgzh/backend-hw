@@ -1,7 +1,7 @@
 from typing import List, Dict
-from back.src.assistant.gemini_assistant import GeminiAssistant
-from back.src.database import SessionLocal
-from back.src import models
+from src.assistant.gemini_assistant import GeminiAssistant
+from src.database import SessionLocal
+from src import models
 import logging
 
 logger = logging.getLogger(__name__)

@@ -1,5 +1,5 @@
 import google.generativeai as genai
-from back.1lecture.src.config import settings
+from src.config import settings
 import logging
 import traceback
 
@@ -7,7 +7,7 @@ logger = logging.getLogger(__name__)
 
 class GeminiAssistant:
     def __init__(self):
-        genai.configure(api_key=AIzaSyACL6Y9vavEOEtlOAghx2ZONVeMhytqGSw)
+        genai.configure(api_key=settings.gemini_api_key)
         self.model = genai.GenerativeModel('gemini-2.0-flash')
         self.chat = self.model.start_chat(history=[])
         
