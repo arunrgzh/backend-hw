@@ -2,11 +2,10 @@ import { useState, useEffect, useRef } from "react";
 import { PaperAirplaneIcon } from "@heroicons/react/24/outline";
 import FooterLogo from "../assets/img/logo.png";
 import TextGenerateEffect from "../components/TextGenerate";
-
-interface Message {
-  role: "user" | "assistant";
-  content: string;
-}
+import VoiceRecorder from "../components/VoiceRecorder";
+import AudioPlayer from "../components/AudioPlayer";
+import { wsClient } from "../lib/api";
+import { Message, WebSocketMessage } from "../lib/types";
 
 interface SuggestedQuestion {
   icon: string;
@@ -18,7 +17,10 @@ function Chat() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputMessage, setInputMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isRecording, setIsRecording] = useState(false);
+  const [isConnected, setIsConnected] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const userId = 1; // TODO: Replace with actual user ID from auth
 
   const suggestedQuestions: SuggestedQuestion[] = [
     {
@@ -51,6 +53,72 @@ function Chat() {
     scrollToBottom();
   }, [messages]);
 
+  // WebSocket connection
+  useEffect(() => {
+    const connectWebSocket = async () => {
+      try {
+        await wsClient.connect(userId);
+        setIsConnected(true);
+
+        // Set up message handler
+        wsClient.onMessage(handleWebSocketMessage);
+      } catch (error) {
+        console.error("Failed to connect to WebSocket:", error);
+        setIsConnected(false);
+      }
+    };
+
+    connectWebSocket();
+
+    return () => {
+      wsClient.disconnect();
+    };
+  }, [userId]);
+
+  const handleWebSocketMessage = (message: WebSocketMessage) => {
+    switch (message.type) {
+      case "text_response":
+        const textMessage: Message = {
+          role: "assistant",
+          content: message.content,
+          type: "text",
+        };
+        setMessages((prev) => [...prev, textMessage]);
+        setIsLoading(false);
+        break;
+
+      case "voice_response":
+        const voiceMessage: Message = {
+          role: "assistant",
+          content: message.text_content || message.content,
+          type: "voice",
+          audioData: message.audio_data,
+        };
+        setMessages((prev) => [...prev, voiceMessage]);
+        setIsLoading(false);
+        break;
+
+      case "transcribed_text":
+        const transcribedMessage: Message = {
+          role: "user",
+          content: message.content,
+          type: "voice",
+        };
+        setMessages((prev) => [...prev, transcribedMessage]);
+        break;
+
+      case "error":
+        const errorMessage: Message = {
+          role: "assistant",
+          content: message.content,
+          type: "text",
+        };
+        setMessages((prev) => [...prev, errorMessage]);
+        setIsLoading(false);
+        break;
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!inputMessage.trim() || isLoading) return;
@@ -58,6 +126,7 @@ function Chat() {
     const userMessage: Message = {
       role: "user",
       content: inputMessage.trim(),
+      type: "text",
     };
 
     setMessages((prev) => [...prev, userMessage]);
@@ -65,36 +134,74 @@ function Chat() {
     setIsLoading(true);
 
     try {
-      const response = await fetch("http://localhost:8000/chat/", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
+      if (isConnected) {
+        // Send message via WebSocket
+        wsClient.sendMessage({
+          type: "text",
           content: userMessage.content,
-          user_id: 1, // TODO: Replace with actual user ID from auth
-        }),
-      });
+          user_id: userId,
+        });
+      } else {
+        // Fallback to REST API when WebSocket is not connected
+        const response = await fetch("http://localhost:8000/chat/", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            content: userMessage.content,
+            user_id: userId,
+          }),
+        });
 
-      if (!response.ok) {
-        throw new Error("Failed to get response");
+        if (!response.ok) {
+          throw new Error("Failed to get response");
+        }
+
+        const data = await response.json();
+        const assistantMessage: Message = {
+          role: "assistant",
+          content: data.response,
+          type: "text",
+        };
+
+        setMessages((prev) => [...prev, assistantMessage]);
+        setIsLoading(false);
       }
-
-      const data = await response.json();
-      const assistantMessage: Message = {
-        role: "assistant",
-        content: data.response,
-      };
-
-      setMessages((prev) => [...prev, assistantMessage]);
     } catch (error) {
       console.error("Error sending message:", error);
       const errorMessage: Message = {
         role: "assistant",
-        content: "Sorry, I'm having trouble processing your request right now.",
+        content:
+          "Sorry, I'm having trouble processing your request right now. Please check your connection.",
+        type: "text",
       };
       setMessages((prev) => [...prev, errorMessage]);
-    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleVoiceRecordingComplete = async (audioBlob: Blob) => {
+    if (!isConnected) return;
+
+    try {
+      // Convert blob to base64
+      const arrayBuffer = await audioBlob.arrayBuffer();
+      const base64Audio = btoa(
+        String.fromCharCode(...new Uint8Array(arrayBuffer))
+      );
+
+      setIsLoading(true);
+
+      // Send voice message via WebSocket
+      wsClient.sendMessage({
+        type: "voice",
+        content: "",
+        user_id: userId,
+        audio_data: base64Audio,
+      });
+    } catch (error) {
+      console.error("Error processing voice recording:", error);
       setIsLoading(false);
     }
   };
@@ -121,6 +228,19 @@ function Chat() {
             Talk freely and our AI will tell you the best spots to achieve your
             aim
           </p>
+
+          {/* Connection status */}
+          <div className="mb-4 flex items-center space-x-2">
+            <div
+              className={`w-3 h-3 rounded-full ${
+                isConnected ? "bg-green-500" : "bg-red-500"
+              }`}
+            />
+            <span className="text-sm text-gray-400">
+              {isConnected ? "Connected" : "Disconnected"}
+            </span>
+          </div>
+
           {/* Search input */}
           <form onSubmit={handleSubmit} className="w-full max-w-2xl mb-8">
             <div className="relative">
@@ -129,21 +249,39 @@ function Chat() {
                 value={inputMessage}
                 onChange={(e) => setInputMessage(e.target.value)}
                 placeholder="Ask me anything..."
-                className="w-full bg-white bg-opacity-10 text-white rounded-full px-6 py-3 pl-12 focus:outline-none focus:ring-2 focus:ring-primary-orange font-poppins placeholder-gray-500 text-lg"
+                className="w-full bg-white bg-opacity-10 text-white rounded-full px-6 py-3 pl-12 pr-24 focus:outline-none focus:ring-2 focus:ring-primary-orange font-poppins placeholder-gray-500 text-lg"
                 disabled={isLoading}
               />
               <span className="absolute left-4 top-1/2 transform -translate-y-1/2 text-xl">
                 🎯
               </span>
+
+              {/* Voice recorder */}
+              <div className="absolute right-16 top-1/2 transform -translate-y-1/2">
+                <VoiceRecorder
+                  onRecordingComplete={handleVoiceRecordingComplete}
+                  isRecording={isRecording}
+                  onStartRecording={() => setIsRecording(true)}
+                  onStopRecording={() => setIsRecording(false)}
+                />
+              </div>
+
+              {/* Text submit button */}
               <button
                 type="submit"
                 disabled={isLoading || !inputMessage.trim()}
                 className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-primary-orange text-white rounded-full p-2 hover:bg-opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
+                title={
+                  !isConnected
+                    ? "WebSocket disconnected - using REST API fallback"
+                    : "Send message"
+                }
               >
                 <PaperAirplaneIcon className="h-5 w-5" />
               </button>
             </div>
           </form>
+
           {/* Suggested questions */}
           <div className="text-gray-400 mb-4 font-poppins text-center">
             You may ask
@@ -188,7 +326,17 @@ function Chat() {
                       : "bg-white bg-opacity-10 text-white"
                   }`}
                 >
-                  {message.content}
+                  <div className="mb-2">{message.content}</div>
+
+                  {/* Audio player for voice messages */}
+                  {message.role === "assistant" &&
+                    message.type === "voice" &&
+                    message.audioData && (
+                      <AudioPlayer
+                        audioData={message.audioData}
+                        autoPlay={true}
+                      />
+                    )}
                 </div>
               </div>
             ))}
@@ -205,6 +353,7 @@ function Chat() {
             )}
             <div ref={messagesEndRef} />
           </div>
+
           {/* Input form */}
           <form
             onSubmit={handleSubmit}
@@ -216,16 +365,33 @@ function Chat() {
                 value={inputMessage}
                 onChange={(e) => setInputMessage(e.target.value)}
                 placeholder="Type your message..."
-                className="w-full bg-white bg-opacity-10 text-white rounded-full px-6 py-3 pl-12 focus:outline-none focus:ring-2 focus:ring-primary-orange font-poppins placeholder-gray-300 text-lg"
+                className="w-full bg-white bg-opacity-10 text-white rounded-full px-6 py-3 pl-12 pr-24 focus:outline-none focus:ring-2 focus:ring-primary-orange font-poppins placeholder-gray-300 text-lg"
                 disabled={isLoading}
               />
               <span className="absolute left-4 top-1/2 transform -translate-y-1/2 text-xl">
                 🎯
               </span>
+
+              {/* Voice recorder */}
+              <div className="absolute right-16 top-1/2 transform -translate-y-1/2">
+                <VoiceRecorder
+                  onRecordingComplete={handleVoiceRecordingComplete}
+                  isRecording={isRecording}
+                  onStartRecording={() => setIsRecording(true)}
+                  onStopRecording={() => setIsRecording(false)}
+                />
+              </div>
+
+              {/* Text submit button */}
               <button
                 type="submit"
                 disabled={isLoading || !inputMessage.trim()}
                 className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-primary-orange text-white rounded-full p-2 hover:bg-opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
+                title={
+                  !isConnected
+                    ? "WebSocket disconnected - using REST API fallback"
+                    : "Send message"
+                }
               >
                 <PaperAirplaneIcon className="h-5 w-5" />
               </button>
@@ -233,6 +399,7 @@ function Chat() {
           </form>
         </>
       )}
+
       {/* Footer */}
       {messages.length === 0 && (
         <footer className="bg-black text-white py-10 px-4 w-full mt-20">
